@@ -10,3 +10,7 @@ class SherpaWrapper(object):
             self.value = self._sherpa_values[value.lower()]
         except KeyError:
             UserWarning("Value not found")  # todo handle
+
+    @classmethod
+    def get_available(cls):
+        return list(cls._sherpa_values.keys())

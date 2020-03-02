@@ -131,7 +131,7 @@ class SherpaMCMC(object):
         """
         self._mcmc.set_sampler_opt(opt, value)
 
-    def get_sampler(self,):
+    def get_sampler(self):
         return self._mcmc.get_sampler()
 
     def set_prior(self, parameter, prior):
@@ -198,21 +198,21 @@ class SherpaFitter(Fitter):
     ----------
     optimizer : string
         the name of a sherpa optimizer.
-        posible options include
+        posible options include:
         {opt}
     statistic : string
         the name of a sherpa statistic.
-        posible options include
+        posible options include:
         {stat}
     estmethod : string
         the name of a sherpa estmethod.
-        possible options include
+        possible options include:
         {est}
 
     """.format(
-        opt=", ".join(OptMethod._sherpa_values.keys()),
-        stat=", ".join(Stat._sherpa_values.keys()),
-        est=", ".join(EstMethod._sherpa_values.keys()),
+        opt=", ".join(OptMethod.get_available()),
+        stat=", ".join(Stat.get_available()),
+        est=", ".join(EstMethod.get_available()),
     )  # is this evil?
 
     supported_constraints = ["bounds", "fixed", "tied"]
@@ -246,6 +246,7 @@ class SherpaFitter(Fitter):
             "opt_config",
             property(lambda s: s._opt_config, doc=self._opt_method.__doc__),
         )
+
         # sherpa doesn't currently have a docstring for est_method but maybe the future
         setattr(
             self.__class__,
