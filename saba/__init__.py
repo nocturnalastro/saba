@@ -30,7 +30,19 @@ if sys.version_info < tuple(
 
 # For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
+    from . import sherpa_wrapper
+    from .data import Dataset
+    from .stats import Stat
+    from .optimizers import OptMethod
+    from .estimators import EstMethod
+
     from .main import (
+        SherpaFitter,
+        SherpaMCMC,
+        ConvertedModel,
+    )
+
+    __all__ = (
         SherpaFitter,
         SherpaMCMC,
         Stat,
