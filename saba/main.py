@@ -434,7 +434,25 @@ class ConvertedModel(object):
             )
 
     @staticmethod
-    def _astropy_to_sherpa_model(model):
+    def _prepare_param(model_name, parameter):
+        attrs = {
+            "name": parameter.name,
+            "val": parameter.value,
+            "min": parameter.min,
+            "max": parameter.max,
+            "hard_min": parameter.min,
+            "hard_max": parameter.max,
+            # TODO add this back in "units": None,
+            "frozen": parameter.fixed,
+            "alwaysfrozen": False,
+        }
+        return Parameter(
+            modelname="wrap_" + model_name,
+            **{k: v for k, v in attrs.items() if v is not None}
+        )
+
+    @classmethod
+    def _astropy_to_sherpa_model(cls, astropy_model):
         """
         Converts the model using sherpa's usermodel suppling the parameter detail to sherpa
         then using a decorator to allow the call method to act like the calc method
@@ -443,81 +461,47 @@ class ConvertedModel(object):
         def _calc2call(func):
             """This decorator makes call and calc work together."""
 
-            def _converter(inp, *x):
-                if func.n_inputs == 1:
-                    retvals = func.evaluate(x[0], *inp)
-                else:
-                    retvals = func.evaluate(x[0], x[1], *inp)
-                return retvals
+            def _converter(model_params, *inputs):
+                return func.evaluate(*itertools.chain(inputs, model_params))
 
             return _converter
 
-        if len(model.ineqcons) > 0 or len(model.eqcons) > 0:
+        if len(astropy_model.ineqcons) > 0 or len(astropy_model.eqcons) > 0:
             AstropyUserWarning(
                 "In/eqcons are not supported by sherpa these will be ignored!"
             )
 
         pars = []
         linkedpars = []
-        for pname in model.param_names:
-            param = getattr(model, pname)
-            vals = [
-                param.name,
-                param.value,
-                param.min,
-                param.max,
-                param.min,
-                param.max,
-                None,
-                param.fixed,
-                False,
-            ]
-            attrnames = [
-                "name",
-                "val",
-                "min",
-                "max",
-                "hard_min",
-                "hard_max",
-                "units",
-                "frozen",
-                "alwaysfrozen",
-            ]
-            if model.name is None:
-                model._name = ""
+        for param_name in astropy_model.param_names:
+            astropy_param = getattr(astropy_model, param_name)
 
-            pars.append(
-                Parameter(
-                    modelname="wrap_" + model.name,
-                    **dict(
-                        [
-                            (atr, val)
-                            for atr, val in zip(attrnames, vals)
-                            if val is not None
-                        ]
-                    )
-                )
-            )
-            if param.tied is not False:
-                linkedpars.append(pname)
+            if astropy_model.name is None:
+                astropy_model._name = ""
 
-        smodel = UserModel(model.name, pars)
-        smodel.calc = _calc2call(model)
+            pars.append(cls._prepare_param(astropy_model._name, astropy_param))
 
-        for pname in linkedpars:
-            param = getattr(model, pname)
-            sparam = getattr(smodel, pname)
-            sparam.link = param.tied(smodel)
+            if astropy_param.tied is not False:
+                linkedpars.append(param_name)
 
-        return smodel
+        sherpa_model = UserModel(astropy_model.name, pars)
+        sherpa_model.calc = _calc2call(astropy_model)
+
+        for param_name in linkedpars:
+            astropy_param = getattr(astropy_model, param_name)
+            sherpa_param = getattr(sherpa_model, param_name)
+            # Call the astropy link function on the sherpa model evaluate the link
+            sherpa_param.link = astropy_param.tied(sherpa_model)
+
+        return sherpa_model
 
     def get_astropy_model(self):
         """Returns an astropy model based on the sherpa model"""
         return_models = []
 
-        for apymod, shmod in self.model_dict.items():
-            return_models.append(apymod.copy())
-            for pname, pval in map(lambda p: (p.name, p.val), shmod.pars):
+        for astropy_model, sherpa_model in self.model_dict.items():
+            return_models.append(astropy_model.copy())
+            for pname, pval in map(lambda p: (p.name, p.val), sherpa_model.pars):
                 getattr(return_models[-1], pname.split(".")[-1]).value = pval
 
         if len(return_models) > 1:
