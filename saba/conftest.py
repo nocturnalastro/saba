@@ -2,7 +2,8 @@
 # test infrastructure.
 
 from astropy.version import version as astropy_version
-if astropy_version < '3.0':
+
+if astropy_version < "3.0":
     # With older versions of Astropy, we actually need to import the pytest
     # plugins themselves in order to make them discoverable by pytest.
     from astropy.tests.pytest_plugins import *
@@ -35,11 +36,11 @@ else:
 # the tests. Making it pass for KeyError is essential in some cases when
 # the package uses other astropy affiliated packages.
 try:
-    PYTEST_HEADER_MODULES['Astropy'] = 'astropy'
-    PYTEST_HEADER_MODULES['sherpa'] = 'sherpa'
-    del PYTEST_HEADER_MODULES['h5py']
-    del PYTEST_HEADER_MODULES['Pandas']
-    del PYTEST_HEADER_MODULES['Scipy']
+    PYTEST_HEADER_MODULES["Astropy"] = "astropy"
+    PYTEST_HEADER_MODULES["sherpa"] = "sherpa"
+    del PYTEST_HEADER_MODULES["h5py"]
+    del PYTEST_HEADER_MODULES["Pandas"]
+    del PYTEST_HEADER_MODULES["Scipy"]
 except (NameError, KeyError):  # NameError is needed to support Astropy < 1.0
     pass
 
@@ -53,11 +54,11 @@ import os
 try:
     from .version import version, astropy_helpers_version
 except ImportError:
-    version = 'dev'
+    version = "dev"
 
 try:
     packagename = os.path.basename(os.path.dirname(__file__))
     TESTED_VERSIONS[packagename] = version
-    TESTED_VERSIONS['astropy_helpers'] = astropy_helpers_version
-except NameError:   # Needed to support Astropy <= 1.0.0
+    TESTED_VERSIONS["astropy_helpers"] = astropy_helpers_version
+except NameError:  # Needed to support Astropy <= 1.0.0
     pass

@@ -13,21 +13,23 @@ from sherpa.sim import MCMC
 
 from astropy.utils import format_doc
 from astropy.utils.exceptions import AstropyUserWarning
-#from astropy.tests.helper import catch_warnings
+
+# from astropy.tests.helper import catch_warnings
 
 
-#with catch_warnings(AstropyUserWarning) as warns:
+# with catch_warnings(AstropyUserWarning) as warns:
 #    """this is to stop the import warning
 #    occuring when we import into saba"""
 from astropy.modeling.fitting import Fitter
+
 #
-#for w in warns:
+# for w in warns:
 #    if "SherpaFitter" not in w.message.message:
 #        warnings.warn(w)
 
 # from astropy.modeling
 
-__all__ = ('SherpaFitter', 'SherpaMCMC')
+__all__ = ("SherpaFitter", "SherpaMCMC")
 
 
 class SherpaWrapper(object):
@@ -55,13 +57,18 @@ class Stat(SherpaWrapper):
             the name of a sherpa statistics.
     """
 
-    _sherpa_values = {'cash': Cash, 'wstat': WStat, 'cstat': CStat,
-                      'chi2': Chi2, 'chi2constvar': Chi2ConstVar,
-                      'chi2datavar': Chi2DataVar,
-                      'chi2gehrels': Chi2Gehrels,
-                      'chi2modvar': Chi2ModVar,
-                      'chi2xspecvar': Chi2XspecVar,
-                      'leastsq': LeastSq}
+    _sherpa_values = {
+        "cash": Cash,
+        "wstat": WStat,
+        "cstat": CStat,
+        "chi2": Chi2,
+        "chi2constvar": Chi2ConstVar,
+        "chi2datavar": Chi2DataVar,
+        "chi2gehrels": Chi2Gehrels,
+        "chi2modvar": Chi2ModVar,
+        "chi2xspecvar": Chi2XspecVar,
+        "leastsq": LeastSq,
+    }
 
 
 class OptMethod(SherpaWrapper):
@@ -74,8 +81,13 @@ class OptMethod(SherpaWrapper):
         value: String
             the name of a sherpa optimization method.
     """
-    _sherpa_values = {'simplex': GridSearch, 'levmar': LevMar,
-                      'moncar': MonCar, 'neldermead': NelderMead}
+
+    _sherpa_values = {
+        "simplex": GridSearch,
+        "levmar": LevMar,
+        "moncar": MonCar,
+        "neldermead": NelderMead,
+    }
 
 
 class EstMethod(SherpaWrapper):
@@ -88,10 +100,11 @@ class EstMethod(SherpaWrapper):
             the name of a sherpa statistics.
     """
 
-    _sherpa_values = {'confidence': Confidence, 'covariance': Covariance,
-                      'projection': Projection}
-
-
+    _sherpa_values = {
+        "confidence": Confidence,
+        "covariance": Covariance,
+        "projection": Projection,
+    }
 
 
 class SherpaMCMC(object):
@@ -109,7 +122,7 @@ class SherpaMCMC(object):
             the name of a valid sherpa walker.
     """
 
-    def __init__(self, fitter, sampler='mh', walker='mh'):
+    def __init__(self, fitter, sampler="mh", walker="mh"):
         self._mcmc = MCMC()
 
         if hasattr(fitter.fit_info, "statval"):
@@ -119,14 +132,14 @@ class SherpaMCMC(object):
                 fitter.est_errors()
             self._cmatrix = fitter.error_info.extra_output
             pars = fitter._fitmodel.sherpa_model.pars
-            self.parameter_map = OrderedDict(map(lambda x: (x.name, x),
-                                             pars))
+            self.parameter_map = OrderedDict(map(lambda x: (x.name, x), pars))
         else:
-            raise AstropyUserWarning("Must have valid fit! "
-                                     "Covariance matrix is not present")
+            raise AstropyUserWarning(
+                "Must have valid fit! " "Covariance matrix is not present"
+            )
 
     def __call__(self, niter=200000):
-        '''
+        """
         based on the `sherpa.sim.get_draws`
 
         Parameters
@@ -142,13 +155,11 @@ class SherpaMCMC(object):
             if the fit was accepted
         parameters: dict
             the parameter values for each draw
-        '''
+        """
 
-        draws = self._mcmc.get_draws(self._fitter, self._cmatrix,
-                                     niter=niter)
+        draws = self._mcmc.get_draws(self._fitter, self._cmatrix, niter=niter)
         self._stat_vals, self._accepted, self._parameter_vals = draws
-        self.acception_rate = (self._accepted.sum() * 100.0 /
-                               self._accepted.size)
+        self.acception_rate = self._accepted.sum() * 100.0 / self._accepted.size
         self.parameters = OrderedDict()
 
         parameter_key_list = list(self.parameter_map.keys())
@@ -250,8 +261,9 @@ class SherpaMCMC(object):
         if parameter in self.parameter_map:
             self._mcmc.set_prior(self.parameter_map[parameter], prior)
         else:
-            raise AstropyUserWarning("Parmater {name} not found in parameter"
-                                     "map".format(name=parameter))
+            raise AstropyUserWarning(
+                "Parmater {name} not found in parameter" "map".format(name=parameter)
+            )
 
     @property
     def accepted(self):
@@ -287,11 +299,13 @@ class SherpaFitter(Fitter):
         possible options include
         {est}
 
-    """.format(opt=", ".join(OptMethod._sherpa_values.keys()),
-               stat=", ".join(Stat._sherpa_values.keys()),
-               est=", ".join(EstMethod._sherpa_values.keys()))  # is this evil?
+    """.format(
+        opt=", ".join(OptMethod._sherpa_values.keys()),
+        stat=", ".join(Stat._sherpa_values.keys()),
+        est=", ".join(EstMethod._sherpa_values.keys()),
+    )  # is this evil?
 
-    supported_constraints = ['bounds', 'fixed','tied']
+    supported_constraints = ["bounds", "fixed", "tied"]
 
     def __init__(self, optimizer="levmar", statistic="leastsq", estmethod="covariance"):
         try:
@@ -317,12 +331,31 @@ class SherpaFitter(Fitter):
         self._data = None  # a handle for sherpa dataset
         self.error_info = {}
 
-        setattr(self.__class__, 'opt_config', property(lambda s: s._opt_config, doc=self._opt_method.__doc__))
+        setattr(
+            self.__class__,
+            "opt_config",
+            property(lambda s: s._opt_config, doc=self._opt_method.__doc__),
+        )
         # sherpa doesn't currently have a docstring for est_method but maybe the future
-        setattr(self.__class__, 'est_config', property(lambda s: s._est_config, doc=self._est_method.__doc__))
+        setattr(
+            self.__class__,
+            "est_config",
+            property(lambda s: s._est_config, doc=self._est_method.__doc__),
+        )
 
-
-    def __call__(self, models, x, y, z=None, xbinsize=None, ybinsize=None, err=None, bkg=None, bkg_scale=1, **kwargs):
+    def __call__(
+        self,
+        models,
+        x,
+        y,
+        z=None,
+        xbinsize=None,
+        ybinsize=None,
+        err=None,
+        bkg=None,
+        bkg_scale=1,
+        **kwargs
+    ):
         """
         Fit the astropy model with a the sherpa fit routines.
 
@@ -368,13 +401,17 @@ class SherpaFitter(Fitter):
         if self._data.ndata > 1:
 
             if len(models) == 1:
-                self._fitmodel = ConvertedModel([models.copy() for _ in range(self._data.ndata)], tie_list)
+                self._fitmodel = ConvertedModel(
+                    [models.copy() for _ in range(self._data.ndata)], tie_list
+                )
                 # Copy the model so each data set has the same model!
             elif len(models) == self._data.ndata:
                 self._fitmodel = ConvertedModel(models, tie_list)
             else:
-                raise Exception("Don't know how to handle multiple models "
-                                "unless there is one foreach dataset")
+                raise Exception(
+                    "Don't know how to handle multiple models "
+                    "unless there is one foreach dataset"
+                )
         else:
             if len(models) > 1:
                 self._data.make_simfit(len(models))
@@ -382,12 +419,21 @@ class SherpaFitter(Fitter):
             else:
                 self._fitmodel = ConvertedModel(models)
 
-        self._fitter = Fit(self._data.data, self._fitmodel.sherpa_model, self._stat_method, self._opt_method, self._est_method, **kwargs)
+        self._fitter = Fit(
+            self._data.data,
+            self._fitmodel.sherpa_model,
+            self._stat_method,
+            self._opt_method,
+            self._est_method,
+            **kwargs
+        )
         self.fit_info = self._fitter.fit()
 
         return self._fitmodel.get_astropy_model()
 
-    def est_errors(self, sigma=None, maxiters=None, numcores=1, methoddict=None, parlist=None):
+    def est_errors(
+        self, sigma=None, maxiters=None, numcores=1, methoddict=None, parlist=None
+    ):
         """
         Use sherpa error estimators based on the last fit.
 
@@ -406,16 +452,25 @@ class SherpaFitter(Fitter):
         if self._fitter is None:
             ValueError("Must complete a valid fit before errors can be calculated")
         if sigma is not None:
-            self._fitter.estmethod.config['sigma'] = sigma
+            self._fitter.estmethod.config["sigma"] = sigma
         if maxiters is not None:
-            self._fitter.estmethod.config['maxiters'] = maxiters
-        if 'numcores' in self._fitter.estmethod.config:
-            if not numcores == self._fitter.estmethod.config['numcores']:
-                self._fitter.estmethod.config['numcores'] = numcores
+            self._fitter.estmethod.config["maxiters"] = maxiters
+        if "numcores" in self._fitter.estmethod.config:
+            if not numcores == self._fitter.estmethod.config["numcores"]:
+                self._fitter.estmethod.config["numcores"] = numcores
 
-        self.error_info = self._fitter.est_errors(methoddict=methoddict, parlist=parlist)
-        pnames = [p.split(".", 1)[-1] for p in self.error_info.parnames]  # this is to remove the model name
-        return pnames, self.error_info.parvals, self.error_info.parmins, self.error_info.parmaxes
+        self.error_info = self._fitter.est_errors(
+            methoddict=methoddict, parlist=parlist
+        )
+        pnames = [
+            p.split(".", 1)[-1] for p in self.error_info.parnames
+        ]  # this is to remove the model name
+        return (
+            pnames,
+            self.error_info.parvals,
+            self.error_info.parmins,
+            self.error_info.parmaxes,
+        )
 
     @property
     def _est_config(self):
@@ -428,7 +483,7 @@ class SherpaFitter(Fitter):
         return self._opt_method.config
 
     # Here is the MCMC wrapper!
-    @format_doc("{__doc__}\n{mcmc_doc}",mcmc_doc=SherpaMCMC.__doc__)
+    @format_doc("{__doc__}\n{mcmc_doc}", mcmc_doc=SherpaMCMC.__doc__)
     def get_sampler(self, *args, **kwargs):
         """
         This returns and instance of `SherpaMCMC` with it's self as the fitter
@@ -465,7 +520,18 @@ class Dataset(SherpaWrapper):
     _data: a sherpa dataset
     """
 
-    def __init__(self, n_dim, x, y, z=None, xbinsize=None, ybinsize=None, err=None, bkg=None, bkg_scale=1):
+    def __init__(
+        self,
+        n_dim,
+        x,
+        y,
+        z=None,
+        xbinsize=None,
+        ybinsize=None,
+        err=None,
+        bkg=None,
+        bkg_scale=1,
+    ):
 
         x = np.array(x)
         y = np.array(y)
@@ -490,17 +556,52 @@ class Dataset(SherpaWrapper):
             except TypeError:
                 bkg_scale = len(x) * [bkg_scale]
 
-
-            for nn, (xx, yy, zz, xxe, yye, zze, bkg, bkg_scale) in enumerate(zip(x, y, z, xbinsize, ybinsize, err, bkg, bkg_scale)):
-                data.append(self._make_dataset(n_dim, x=xx, y=yy, z=zz, xbinsize=xxe, ybinsize=yye, err=zze, bkg=bkg, bkg_scale=bkg_scale, n=nn))
+            for nn, (xx, yy, zz, xxe, yye, zze, bkg, bkg_scale) in enumerate(
+                zip(x, y, z, xbinsize, ybinsize, err, bkg, bkg_scale)
+            ):
+                data.append(
+                    self._make_dataset(
+                        n_dim,
+                        x=xx,
+                        y=yy,
+                        z=zz,
+                        xbinsize=xxe,
+                        ybinsize=yye,
+                        err=zze,
+                        bkg=bkg,
+                        bkg_scale=bkg_scale,
+                        n=nn,
+                    )
+                )
             self.data = DataSimulFit("wrapped_data", data)
             self.ndata = nn + 1
         else:
-            self.data = self._make_dataset(n_dim, x=x, y=y, z=z, xbinsize=xbinsize, ybinsize=ybinsize, err=err, bkg=bkg, bkg_scale=bkg_scale)
+            self.data = self._make_dataset(
+                n_dim,
+                x=x,
+                y=y,
+                z=z,
+                xbinsize=xbinsize,
+                ybinsize=ybinsize,
+                err=err,
+                bkg=bkg,
+                bkg_scale=bkg_scale,
+            )
             self.ndata = 1
 
     @staticmethod
-    def _make_dataset(n_dim, x, y, z=None, xbinsize=None, ybinsize=None, err=None, bkg=None, bkg_scale=1, n=0):
+    def _make_dataset(
+        n_dim,
+        x,
+        y,
+        z=None,
+        xbinsize=None,
+        ybinsize=None,
+        err=None,
+        bkg=None,
+        bkg_scale=1,
+        n=0,
+    ):
         """
         Parameters
         ----------
@@ -533,24 +634,34 @@ class Dataset(SherpaWrapper):
             assert x.shape == y.shape, "shape of x and y don't match in dataset %i" % n
         else:
             z = np.asarray(z)
-            assert x.shape == y.shape == z.shape, "shapes x,y and z don't match in dataset %i" % n
+            assert x.shape == y.shape == z.shape, (
+                "shapes x,y and z don't match in dataset %i" % n
+            )
 
         if xbinsize is not None:
             xbinsize = np.array(xbinsize)
-            assert x.shape == xbinsize.shape, "x's and xbinsize's shapes do not match in dataset %i" % n
+            assert x.shape == xbinsize.shape, (
+                "x's and xbinsize's shapes do not match in dataset %i" % n
+            )
 
         if z is not None and err is not None:
             err = np.array(err)
-            assert z.shape == err.shape, "z's and err's shapes do not match in dataset %i" % n
+            assert z.shape == err.shape, (
+                "z's and err's shapes do not match in dataset %i" % n
+            )
 
             if ybinsize is not None:
                 ybinsize = np.array(ybinsize)
-                assert y.shape == ybinsize.shape, "y's and ybinsize's shapes do not match in dataset %i" % n
+                assert y.shape == ybinsize.shape, (
+                    "y's and ybinsize's shapes do not match in dataset %i" % n
+                )
 
         else:
             if err is not None:
                 err = np.array(err)
-                assert y.shape == err.shape, "y's and err's shapes do not match in dataset %i" % n
+                assert y.shape == err.shape, (
+                    "y's and err's shapes do not match in dataset %i" % n
+                )
 
         if xbinsize is not None:
             bs = xbinsize / 2.0
@@ -561,48 +672,123 @@ class Dataset(SherpaWrapper):
                     if bkg is None:
                         data = Data1D("wrapped_data", x=x, y=y)
                     else:
-                        data = Data1DBkg("wrapped_data", x=x, y=y, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data1DBkg(
+                            "wrapped_data", x=x, y=y, bkg=bkg, bkg_scale=bkg_scale
+                        )
                 else:
                     if bkg is None:
                         data = Data1D("wrapped_data", x=x, y=y, staterror=err)
                     else:
-                        data = Data1DBkg("wrapped_data", x=x, y=y, staterror=err, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data1DBkg(
+                            "wrapped_data",
+                            x=x,
+                            y=y,
+                            staterror=err,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
             else:
                 if err is None:
                     if bkg is None:
 
                         data = Data1DInt("wrapped_data", xlo=x - bs, xhi=x + bs, y=y)
                     else:
-                        data = Data1DIntBkg("wrapped_data", xlo=x - bs, xhi=x + bs, y=y, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data1DIntBkg(
+                            "wrapped_data",
+                            xlo=x - bs,
+                            xhi=x + bs,
+                            y=y,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
                 else:
                     if bkg is None:
-                        data = Data1DInt("wrapped_data", xlo=x - bs, xhi=x + bs, y=y, staterror=err)
+                        data = Data1DInt(
+                            "wrapped_data", xlo=x - bs, xhi=x + bs, y=y, staterror=err
+                        )
                     else:
-                        data = Data1DIntBkg("wrapped_data", xlo=x - bs, xhi=x + bs, y=y, staterror=err, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data1DIntBkg(
+                            "wrapped_data",
+                            xlo=x - bs,
+                            xhi=x + bs,
+                            y=y,
+                            staterror=err,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
         else:
             if xbinsize is None and ybinsize is None:
                 if err is None:
                     if bkg is None:
                         data = Data2D("wrapped_data", x0=x, x1=y, y=z)
                     else:
-                        data = Data2DBkg("wrapped_data", x0=x, x1=y, y=z, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data2DBkg(
+                            "wrapped_data",
+                            x0=x,
+                            x1=y,
+                            y=z,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
                 else:
                     if bkg is None:
                         data = Data2D("wrapped_data", x0=x, x1=y, y=z, staterror=err)
                     else:
-                        data = Data2DBkg("wrapped_data", x0=x, x1=y, y=z, staterror=err, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data2DBkg(
+                            "wrapped_data",
+                            x0=x,
+                            x1=y,
+                            y=z,
+                            staterror=err,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
             elif xbinsize is not None and ybinsize is not None:
                 ys = ybinsize / 2.0
                 if err is None:
                     if bkg is None:
-                        data = Data2DInt("wrapped_data", x0lo=x - bs, x0hi=x + bs, x1lo=y - ys, x1hi=y + ys, y=z)
+                        data = Data2DInt(
+                            "wrapped_data",
+                            x0lo=x - bs,
+                            x0hi=x + bs,
+                            x1lo=y - ys,
+                            x1hi=y + ys,
+                            y=z,
+                        )
                     else:
-                        data = Data2DIntBkg("wrapped_data", x0lo=x - bs, x0hi=x + bs, x1lo=y - ys, x1hi=y + ys, y=z, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data2DIntBkg(
+                            "wrapped_data",
+                            x0lo=x - bs,
+                            x0hi=x + bs,
+                            x1lo=y - ys,
+                            x1hi=y + ys,
+                            y=z,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
                 else:
                     if bkg is None:
-                        data = Data2DInt("wrapped_data", x0lo=x - bs, x0hi=x + bs, x1lo=y - ys, x1hi=y + ys, y=z, staterror=err)
+                        data = Data2DInt(
+                            "wrapped_data",
+                            x0lo=x - bs,
+                            x0hi=x + bs,
+                            x1lo=y - ys,
+                            x1hi=y + ys,
+                            y=z,
+                            staterror=err,
+                        )
                     else:
-                        data = Data2DIntBkg("wrapped_data", x0lo=x - bs, x0hi=x + bs, x1lo=y - ys, x1hi=y + ys, y=z, staterror=err, bkg=bkg, bkg_scale=bkg_scale)
+                        data = Data2DIntBkg(
+                            "wrapped_data",
+                            x0lo=x - bs,
+                            x0hi=x + bs,
+                            x1lo=y - ys,
+                            x1hi=y + ys,
+                            y=z,
+                            staterror=err,
+                            bkg=bkg,
+                            bkg_scale=bkg_scale,
+                        )
             else:
                 raise ValueError("Set xbinsize and ybinsize, or set neither!")
 
@@ -646,9 +832,13 @@ class ConvertedModel(object):
 
                 if tie_list is not None:
                     for par1, par2 in tie_list:
-                        getattr(self.model_dict[par1._model], par1.name).link = getattr(self.model_dict[par2._model], par2.name)
+                        getattr(self.model_dict[par1._model], par1.name).link = getattr(
+                            self.model_dict[par2._model], par2.name
+                        )
 
-            self.sherpa_model = SimulFitModel("wrapped_fit_model", self.model_dict.values())
+            self.sherpa_model = SimulFitModel(
+                "wrapped_fit_model", self.model_dict.values()
+            )
 
     @staticmethod
     def _astropy_to_sherpa_model(model):
@@ -656,31 +846,65 @@ class ConvertedModel(object):
         Converts the model using sherpa's usermodel suppling the parameter detail to sherpa
         then using a decorator to allow the call method to act like the calc method
         """
+
         def _calc2call(func):
             """This decorator makes call and calc work together."""
+
             def _converter(inp, *x):
                 if func.n_inputs == 1:
                     retvals = func.evaluate(x[0], *inp)
                 else:
                     retvals = func.evaluate(x[0], x[1], *inp)
                 return retvals
+
             return _converter
 
         if len(model.ineqcons) > 0 or len(model.eqcons) > 0:
-            AstropyUserWarning('In/eqcons are not supported by sherpa these will be ignored!')
+            AstropyUserWarning(
+                "In/eqcons are not supported by sherpa these will be ignored!"
+            )
 
         pars = []
         linkedpars = []
         for pname in model.param_names:
             param = getattr(model, pname)
-            vals = [param.name, param.value, param.min, param.max, param.min,
-                    param.max, None, param.fixed, False]
-            attrnames = ["name", "val", "min", "max", "hard_min", "hard_max",
-                         "units", "frozen", "alwaysfrozen"]
+            vals = [
+                param.name,
+                param.value,
+                param.min,
+                param.max,
+                param.min,
+                param.max,
+                None,
+                param.fixed,
+                False,
+            ]
+            attrnames = [
+                "name",
+                "val",
+                "min",
+                "max",
+                "hard_min",
+                "hard_max",
+                "units",
+                "frozen",
+                "alwaysfrozen",
+            ]
             if model.name is None:
                 model._name = ""
 
-            pars.append(Parameter(modelname="wrap_" + model.name, **dict([(atr, val) for atr, val in zip(attrnames, vals) if val is not None])))
+            pars.append(
+                Parameter(
+                    modelname="wrap_" + model.name,
+                    **dict(
+                        [
+                            (atr, val)
+                            for atr, val in zip(attrnames, vals)
+                            if val is not None
+                        ]
+                    )
+                )
+            )
             if param.tied is not False:
                 linkedpars.append(pname)
 
@@ -751,7 +975,9 @@ class Data1DIntBkg(Data1DInt):
     def get_background(self, index):
         return self._backgrounds[index]
 
-    def __init__(self, name, xlo, xhi, y, bkg, staterror=None, bkg_scale=1, src_scale=1):
+    def __init__(
+        self, name, xlo, xhi, y, bkg, staterror=None, bkg_scale=1, src_scale=1
+    ):
         self._bkg = np.asanyarray(bkg)
         self._bkg_scale = src_scale
         self.exposure = 1
@@ -809,8 +1035,7 @@ class Data1DBkg(Data1D):
         self.subtracted = False
 
         self._backgrounds = [BkgDataset(bkg, bkg_scale)]
-        Data.__init__(self, name, (x, ), y, staterror)
-
+        Data.__init__(self, name, (x,), y, staterror)
 
 
 class Data2DIntBkg(Data2DInt):
@@ -859,7 +1084,9 @@ class Data2DIntBkg(Data2DInt):
     def get_background(self, index):
         return self._backgrounds[index]
 
-    def __init__(self, name, xlo, xhi, ylo, yhi, z, bkg, staterror=None, bkg_scale=1, src_scale=1):
+    def __init__(
+        self, name, xlo, xhi, ylo, yhi, z, bkg, staterror=None, bkg_scale=1, src_scale=1
+    ):
         self._bkg = np.asanyarray(bkg)
         self._bkg_scale = src_scale
         self.exposure = 1
@@ -921,7 +1148,7 @@ class Data2DBkg(Data2D):
 
         self._backgrounds = [BkgDataset(bkg, bkg_scale)]
         Data.__init__(self, name, (x, y), z, staterror)
-        
+
 
 class BkgDataset(object):
     """
