@@ -14,7 +14,8 @@ from . import Dataset, OptMethod, Stat, EstMethod
 __all__ = ("SherpaFitter", "SherpaMCMC")
 
 
-
+def _remove_model_from_param_name(name):
+    return name.split(".", 1)[-1]
 
 
 class SherpaMCMC(object):
@@ -373,9 +374,7 @@ class SherpaFitter(Fitter):
         self.error_info = self._fitter.est_errors(
             methoddict=methoddict, parlist=parlist
         )
-        pnames = [
-            p.split(".", 1)[-1] for p in self.error_info.parnames
-        ]  # this is to remove the model name
+        pnames = list(map(_remove_model_from_param_name, self.error_info.parnames))
         return (
             pnames,
             self.error_info.parvals,
@@ -477,12 +476,11 @@ class ConvertedModel(object):
         for param_name in astropy_model.param_names:
             astropy_param = getattr(astropy_model, param_name)
 
-            if astropy_model.name is None:
-                astropy_model._name = ""
+            pars.append(
+                cls._prepare_param(astropy_model.name or "astropy_model", astropy_param)
+            )
 
-            pars.append(cls._prepare_param(astropy_model._name, astropy_param))
-
-            if astropy_param.tied is not False:
+            if astropy_param.tied:
                 linkedpars.append(param_name)
 
         sherpa_model = UserModel(astropy_model.name, pars)
@@ -502,8 +500,11 @@ class ConvertedModel(object):
 
         for astropy_model, sherpa_model in self.model_dict.items():
             return_models.append(astropy_model.copy())
-            for pname, pval in map(lambda p: (p.name, p.val), sherpa_model.pars):
-                getattr(return_models[-1], pname.split(".")[-1]).value = pval
+            for pname, pval in map(
+                lambda p: (_remove_model_from_param_name(p.name), p.val),
+                sherpa_model.pars,
+            ):
+                getattr(return_models[-1], pname).value = pval
 
         if len(return_models) > 1:
             return return_models
